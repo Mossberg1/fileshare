@@ -1,0 +1,25 @@
+@startuml
+start
+
+:User starts a file sharing session;
+:User invites another user to the session;
+
+:Use ICE (with STUN) to find possible paths;
+
+if (Direct connection possible?) then (yes)
+  :Connect peers directly;
+else (no)
+  :Use TURN relay to connect peers;
+endif
+
+repeat :Session is active;
+  :User sends a file;
+  if (Other user accepts?) then (yes)
+    :Start file transfer;
+  endif
+repeat while (Active session?) is (yes)
+
+:End session;
+stop
+@enduml
+
