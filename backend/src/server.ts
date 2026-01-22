@@ -2,18 +2,30 @@ import express from "express";
 import http from "http";
 import path from "path";
 import { Server, Socket } from "socket.io";
+import { SessionHandler } from "./services/session";
+
 
 const port = 8080;
 const frontend_build_dir = '../../frontend/build';
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // TODO: Change?
+    methods: ["GET", "POST"]
+  }
+});
 
 app.use(express.static(path.join(__dirname, frontend_build_dir)));
 
 io.on('connection', (socket: Socket) => {
     console.log('User has connected');
+
+    const sessionHandler = new SessionHandler(socket);
+
+    sessionHandler.joinSession();
+    sessionHandler.startSession();
 
     socket.on('disconnect', () => {
         console.log('User has disconnected');
