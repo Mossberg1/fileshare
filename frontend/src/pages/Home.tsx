@@ -1,8 +1,8 @@
 import { useContext, useState } from "react";
-import { SessionContext } from "../context/SessionContext";
+import { SocketContext } from "../context/SocketContext";
 
 export const Home: React.FC = () => {
-    const socket = useContext(SessionContext);
+    const socket = useContext(SocketContext);
     const [sessionId, setSessionId] = useState<string>("");
 
     if (!socket) {
@@ -20,12 +20,7 @@ export const Home: React.FC = () => {
     return (
         <div>
             <button onClick={startSession}>Start session</button>
-            <input 
-                type="text"
-                placeholder="Session Id"
-                value={sessionId}
-                onChange={e => setSessionId(e.target.value)}
-            />
+            <input type="text" placeholder="Session Id" value={sessionId} onChange={(e) => setSessionId(e.target.value)} />
             <button onClick={joinSession}>Join session</button>
         </div>
     );

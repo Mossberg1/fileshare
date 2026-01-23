@@ -22,13 +22,22 @@ app.use(express.static(path.join(__dirname, frontend_build_dir)));
 io.on('connection', (socket: Socket) => {
     console.log('User has connected');
 
-    const sessionHandler = new SessionHandler(socket);
+    const sessionHandler = new SessionHandler(socket, io);
 
-    sessionHandler.joinSession();
-    sessionHandler.startSession();
+    // --- Session Handling ---
+    sessionHandler.register();
 
-    socket.on('disconnect', () => {
-        console.log('User has disconnected');
+    // --- WebRTC Signaling --- TODO: Add to own module
+    socket.on('webrtc-offer', ({ offer, sessionId }) => {
+      socket.broadcast.to(sessionId).emit('webrtc-offer', offer);
+    });
+
+    socket.on('webrtc-answer', ({ answer, sessionId }) => {
+      socket.broadcast.to(sessionId).emit('webrtc-answer', answer);
+    });
+
+    socket.on('ice-candidate', ({ candidate, sessionId }) => {
+      socket.broadcast.to(sessionId).emit('ice-candidate', candidate);
     });
 });
 

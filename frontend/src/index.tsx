@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { SessionProvider } from "./context/SessionContext";
+import { SocketProvider } from "./context/SocketContext";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { Session } from "./pages/Session";
@@ -12,12 +12,12 @@ const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement)
 root.render(
     <React.StrictMode>
         <BrowserRouter>
-            <SessionProvider>
+            <SocketProvider>
                 <Routes>
-                  <Route path="/" element={<Home />}/>
-                  <Route path="session/:id" element={<Session />}/>
+                    <Route path="/" element={<Home />} />
+                    <Route path="session/:id" element={<Session />} />
                 </Routes>
-            </SessionProvider>
+            </SocketProvider>
         </BrowserRouter>
     </React.StrictMode>,
 );
