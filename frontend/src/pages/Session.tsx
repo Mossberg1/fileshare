@@ -1,6 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SocketContext } from "../context/SocketContext";
+import { CloudDownload, Check, Close, CloudUpload } from "@mui/icons-material";
+import { Box, Card, CardContent, Stack, Typography, Chip, Paper, Alert, Button, LinearProgress } from "@mui/material";
 
 interface FileRequestMessage {
     type: 'file-request';
@@ -233,43 +235,6 @@ export const Session: React.FC = () => {
         setSendFile(null);
     };
 
-    /*
-    const sendFileInChunks = () => {
-        if (!sendFile || !dataChannel.current)
-            return;
-
-        const dc = dataChannel.current;
-        const chunkSize = 16384;
-        let offset = 0;
-
-        const reader = new FileReader();
-
-        reader.onload = function(e) {
-            if (!e.target?.result)
-                return;
-
-            const chunk = e.target.result as ArrayBuffer;
-            dc.send(chunk);
-            offset += chunk.byteLength;
-
-            if (offset < sendFile.size) {
-                readSlice(offset);
-            }
-            else {
-                setMessages(prev => [...prev, `You: Finished sending ${sendFile.name}`]);
-                setSendFile(null);
-            }
-        };
-
-        const readSlice = (o: number) => {
-            const slice = sendFile.slice(o, o + chunkSize);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        readSlice(0);
-    };
-    */
-
     const handleAccept = () => {
         if (incomingFileRequest && dataChannel.current && dataChannel.current.readyState === 'open') {
             setIsReceiving(true);
@@ -288,41 +253,91 @@ export const Session: React.FC = () => {
         }
     };
 
+    // --- Helper Functions ---
+    const formatBytes = (bytes: number) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
     return (
-        <div>
-            <h2>File Transfer Session</h2>
-            <div style={{ border: '1px solid black', height: '200px', overflowY: 'scroll', marginBottom: '10px', padding: '5px' }}>
-                {messages.map((msg, index) => (
-                  <div key={index}>{msg}</div>  
-                ))}
-            </div>
+        <Box sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
+            <Card variant="outlined">
+                <CardContent>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h6">Active Session</Typography>
+                        <Chip label={`ID: ${id}`} color="primary" variant="outlined" />
+                    </Stack>
 
-            {/* -- Incoming file request -- */}
-            {incomingFileRequest && !isReceiving && (
-                <div style={{ border: '1px solid blue', padding: '10px', margin: '10px 0'}}>
-                    <p>Incoming file: <strong>{incomingFileRequest.name}</strong> ({(incomingFileRequest.size / 1024).toFixed(2)} KB)</p>
-                    <button onClick={handleAccept}>Accept</button>                    
-                    <button onClick={handleReject} style={{marginLeft: '10px'}}>Reject</button>
-                </div>
-            )}
+                    {/* Log Window */}
+                    <Paper variant="outlined" sx={{ height: 200, overflow: 'auto', p: 2, mb: 3, bgcolor: 'action.hover' }}>
+                        {messages.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                                Waiting for connection...
+                            </Typography>
+                        ) : (
+                            messages.map((msg, i) => (
+                                <Typography key={i} variant="caption" display="block" sx={{ fontFamily: 'monospace' }}>
+                                    {msg}
+                                </Typography>
+                            ))
+                        )}
+                    </Paper>
 
-            {/* -- Send file -- */}
-            {!incomingFileRequest && (
-                <div style={{margin: '10px 0'}}>
-                    <input type="file" onChange={handleFileSelect} disabled={!!sendFile} />
-                    <button onClick={requestFileTransfer} disabled={!sendFile} style={{marginLeft: '10px'}}>Send File</button>
-                    {sendFile && <p>Selected file: {sendFile.name}</p>}
-                </div>
-            )}
+                    {/* Incoming Request */}
+                    {incomingFileRequest && !isReceiving && (
+                        <Alert severity="info" icon={<CloudDownload />} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Incoming: {incomingFileRequest.name} ({formatBytes(incomingFileRequest.size)})
+                            </Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Button size="small" variant="contained" color="success" onClick={() => { handleAccept()}} startIcon={<Check />}>
+                                    Accept
+                                </Button>
+                                <Button size="small" variant="outlined" color="error" onClick={() => { handleReject()}} startIcon={<Close />}>
+                                    Reject
+                                </Button>
+                            </Stack>
+                        </Alert>
+                    )}
 
-            {/* -- Progress Bar -- */}
-            {isReceiving && (
-                <div style={{margin: '10px 0'}}>
-                    <p>Receiving {incomingFileRequest?.name}</p>
-                    <progress value={transferProgress} max="100" style={{width:'100%'}}/>
-                    <span> {Math.round(transferProgress)}%</span>
-                </div>
-            )}
-       </div>
+                    {/* Send Interface */}
+                    {!incomingFileRequest && !isReceiving && (
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Button variant="outlined" component="label">
+                                Select File
+                                <input type="file" hidden onChange={handleFileSelect} />
+                            </Button>
+                            
+                            <Typography variant="body2" noWrap sx={{ flexGrow: 1, maxWidth: 200 }}>
+                                {sendFile ? sendFile.name : "No file selected"}
+                            </Typography>
+
+                            <Button 
+                                variant="contained" 
+                                disabled={!sendFile} 
+                                onClick={requestFileTransfer}
+                                endIcon={<CloudUpload />}
+                            >
+                                Send
+                            </Button>
+                        </Stack>
+                    )}
+
+                    {/* Progress Bar */}
+                    {isReceiving && (
+                        <Box sx={{ mt: 2 }}>
+                            <Stack direction="row" justifyContent="space-between" mb={1}>
+                                <Typography variant="body2">Downloading...</Typography>
+                                <Typography variant="body2">{Math.round(transferProgress)}%</Typography>
+                            </Stack>
+                            <LinearProgress variant="determinate" value={transferProgress} />
+                        </Box>
+                    )}
+                </CardContent>
+            </Card>
+        </Box>
     );
 };
