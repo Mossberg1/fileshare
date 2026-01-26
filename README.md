@@ -6,7 +6,7 @@ Support for TURN server will be added later.
 ## Features
 - Create a direct private session
 - Invite via url
-- P2P file transfer (later)
+- P2P file transfer
 - Turn server (later)
 
 ## Stack
