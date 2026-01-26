@@ -1,6 +1,6 @@
 # P2P File Share
-A simple peer-to-peer file transfer prototype using WebRTC and Socket.IO.
-Files are transfered directly between users. The server is only used to create the session between the peers. 
+A simple peer-to-peer file transfer application using WebRTC and Socket.IO.
+Files are transfered directly between users. The server is only used to create the session between the users. 
 Support for TURN server will be added later. 
 
 ## Features
